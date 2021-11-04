@@ -1,11 +1,11 @@
+#define USE_DOUBLE
 #include "hsm.hpp"
 #include "iostream"
-
 int main() {
-	hsm::Point2<int> p1;
-	hsm::Point2<float> p2(0.003, -0.005);
-	hsm::Point2<float> p3 = hsm::Point2<float>(1.58, 9.96);
-	hsm::Point2<float> p4 = hsm::Point2<float>(1.58, 9.96);
+	hsm::Point3<int> p1;
+	hsm::Point3<float> p2(0.003, -0.005, -6);
+	hsm::Point3<float> p3 = hsm::Point3<float>(1.58, 9.96, 0.05f);
+	hsm::Point3<float> p4 = hsm::Point3<float>(1.58, 9.96, 0.05f);
 	std::cout << p1 << std::endl;
 	std::cout << p2 << std::endl;
 	std::cout << p3 << std::endl;
@@ -16,6 +16,7 @@ int main() {
 	std::cout << p3/5.24 << std::endl;
 	std::cout << p3[0] << std::endl;
 	std::cout << p3[1] << std::endl;
+	std::cout << p3[2] << std::endl;
 	std::cout << -p3 << std::endl;
 	std::cout << (p3-p2).x << std::endl;
 	std::cout << (p3-p2).y << std::endl;
