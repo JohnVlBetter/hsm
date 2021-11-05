@@ -27,12 +27,15 @@ int main() {
 	if(p3 == p4)std::cout << "1" << std::endl;
 	if(p3 != p2)std::cout << "2" << std::endl;
 
-	hsm::Vector2<float>v1(0.0036f, -96.5f);
-	hsm::Vector2<float>v2(1.5f, 9.6f);
+	hsm::Vector3<float>v1(0.0036f, -96.5f, 2);
+	hsm::Vector3<float>v2(1.5f, 9.6f, 3);
+	hsm::Vector3<float>x(45.5f,0,0);
+	hsm::Vector3<float>y(0,56.0f,0);
 	std::cout << v1.length() << std::endl;
 	std::cout << v1.abs() << std::endl;
 	std::cout << v1.normalize() << std::endl;
 	std::cout << dot(v1,v2) << std::endl;
+	std::cout << cross(x,y) << std::endl;
 	system("pause");
 	return 0;
 }

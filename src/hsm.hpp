@@ -442,10 +442,139 @@ class Vector3 {
 public:
 	//public methods
 	Vector3() :x(0), y(0), z(0) {}
-	Vector3(T xx, T yy, T zz) :x(xx), y(yy), z(zz) {}
+	Vector3(T xx, T yy, T zz) :x(xx), y(yy), z(zz) {} 
+
+	template<typename S>
+	explicit Vector3(const Point3<T>& p) {
+		x = (T)p.x;
+		y = (T)p.y;
+		z = (T)p.z;
+	}
+
+	template<typename S>
+	explicit Vector3(const Vector3<T>& v) {
+		x = (T)v.x;
+		y = (T)v.y;
+		z = (T)v.z;
+	}
+
+	bool hasNaN() const { return isNaN(x) || isNaN(y) || isNaN(z); }
+
+	Vector3<T>& operator = (const Vector3<T>& v) {
+		x = v.x;
+		y = v.y;
+		z = v.z;
+		return *this;
+	}
+
+	bool operator == (const Vector3<T>& v) const {
+		return x == v.x && y == v.y && z == v.z;
+	}
+
+	bool operator != (const Vector3<T>& v) const {
+		return x != v.x || y != v.y || z != v.z;
+	}
+
+	Vector3<T> operator -() const {
+		return Vector3<T>(-x, -y, -z);
+	}
+
+	T operator [](int i) const {
+		assert(i >= 0 && i <= 2);
+		if (i == 0) return x;
+		if (i == 1) return y;
+		return z;
+	}
+
+	T& operator [](int i) {
+		assert(i >= 0 && i <= 2);
+		if (i == 0) return x;
+		if (i == 1) return y;
+		return z;
+	}
+
+	Vector3<T> operator + (const Vector3<T>& v) const {
+		return Point3<T>(x + v.x, y + v.y, z + v.z);
+	}
+
+	Vector3<T>& operator += (const Vector3<T>& v) {
+		x += v.x;
+		y += v.y;
+		z += v.z;
+		return *this;
+	}
+
+	Vector3<T> operator - (const Vector3<T>& v) const {
+		return Point3<T>(x - v.x, y - v.y, z - v.z);
+	}
+
+	Vector3<T>& operator -= (const Vector3<T>& v) {
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
+		return *this;
+	}
+
+	template<typename S>
+	Vector3<T> operator *(S n) const {
+		return Vector3<T>(n * x, n * y, n * z);
+	}
+
+	template<typename S>
+	Vector3<T>& operator *= (S n) {
+		x *= n;
+		y *= n;
+		z *= n;
+		return *this;
+	}
+
+	template<typename S>
+	Vector3<T> operator / (S n) const {
+		assert(n != 0);
+		Float inverse = (Float)1 / n;
+		return Vector3<T>(x * inverse, y * inverse, z * inverse);
+	}
+
+	template<typename S>
+	Vector3<T>& operator /= (S n) {
+		assert(n != 0);
+		Float inverse = (Float)1 / n;
+		x *= inverse;
+		y *= inverse;
+		z *= inverse;
+		return *this;
+	}
+
+	Float lengthSquared()const { return x * x + y * y + z * z; }
+	Float length()const { return std::sqrt(lengthSquared()); }
+
+	Vector3<T> abs() const { return Vector3<T>(std::abs(x), std::abs(y), std::abs(z)); }
+	Vector3<T> normalize() const { return *this / length(); }
 
 	//public data
 	T x, y, z;
 };
+
+template<typename T>
+inline std::ostream& operator << (std::ostream& o, const Vector3<T>& v) {
+	o << '[' << v.x << ',' << v.y << ',' << v.z << ']';
+	return o;
+}
+
+template<typename T, typename U>
+inline Vector3<T> operator * (U n, const Vector3<T>& v) {
+	return v * n;
+}
+
+template<typename T>
+inline Float dot(const Vector3<T>& v1, const Vector3<T>& v2) {
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+template<typename T>
+inline Vector3<T> cross(const Vector3<T>& v1, const Vector3<T>& v2) {
+	return Vector3<T>((v1.y * v2.z) - (v1.z * v2.y), 
+		(v1.z * v2.x) - (v1.x * v2.z), (v1.x * v2.y) - (v1.y * v2.x));
+}
 }
 #endif
