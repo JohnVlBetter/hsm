@@ -729,9 +729,9 @@ inline std::ostream& operator << (std::ostream& o, const Matrix4x4& mat) {
 	return o;
 }
 
-Matrix4x4 Translate(const Vector3f pos) {
-	return Matrix4x4(1.0f, 0.0f, 0.0f, pos.x, 0.0f, 1.0f, 0.0f, pos.y,
-		0.0f, 0.0f, 1.0f, pos.z, 0.0f, 0.0f, 0.0f, 1.0f);
+Matrix4x4 Translate(const Vector3f delta) {
+	return Matrix4x4(1.0f, 0.0f, 0.0f, delta.x, 0.0f, 1.0f, 0.0f, delta.y,
+		0.0f, 0.0f, 1.0f, delta.z, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Matrix4x4 RotateX(Float degree) {
@@ -773,9 +773,30 @@ Matrix4x4 Rotate(const Vector3f& axis, Float degree) {
 		0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-Matrix4x4 Scale(const Vector3f scale) {
+Matrix4x4 Scale(const Vector3f& scale) {
 	return Matrix4x4(scale.x, 0.0f, 0.0f, 0.0f, 0.0f, scale.y, 0.0f, 0.0f,
 		0.0f, 0.0f, scale.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+Matrix4x4 GetViewMatrix(const Point3f& pos, const Point3f& target, const Vector3f& viewUp) {
+	Vector3f forward = (target - pos).Normalize();
+	if (Cross(viewUp.Normalize(), forward).Length() == 0) {
+		std::cout << "hsm error : The up direction and the view direction is the same direction!" << std::endl;
+		return Matrix4x4();
+	}
+	Vector3f right = Cross(viewUp.Normalize(), forward);
+	Vector3f up = Cross(forward, right);
+	Matrix4x4 rotateMat(right.x, right.y, right.z, 0.0f, up.x, up.y, up.z, 0.0f,
+		forward.x, forward.y, forward.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	Matrix4x4 translateMat(1.0f, 0.0f, 0.0f, -pos.x, 0.0f, 1.0f, 0.0f, -pos.y,
+		0.0f, 0.0f, 1.0f, -pos.z, 0.0f, 0.0f, 0.0f, 1.0f);
+	return rotateMat * translateMat;
+}
+
+Matrix4x4 GetPerspectiveMatrix(Float aspect, Float fov, Float near, Float far) {
+	Float tanHalfFov = std::tan(Radians(fov) * 0.5f);
+	return Matrix4x4(1 / (aspect * tanHalfFov), 0.0f, 0.0f, 0.0f, 0.0f, 1 / tanHalfFov, 0.0f, 0.0f,
+		0.0f, 0.0f, (near + far) / (far - near), 1.0f, 0.0f, 0.0f, (2 * far * near)/(near - far), 0.0f);
 }
 
 }

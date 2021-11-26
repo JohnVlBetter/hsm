@@ -52,6 +52,11 @@ int main() {
 	std::cout << rotateZ90 << std::endl;
 	std::cout << rotateZ90_2 << std::endl;
 	if (rotateZ90_2 == rotateZ90) std::cout << "yess2!!!" << std::endl;
+
+	std::cout << "***********************" << std::endl;
+	hsm::Matrix4x4 viewMat = hsm::GetPerspectiveMatrix(1920.0f / 1080.0f, 175, 0.1f, 1000.0f);
+	std::cout << viewMat << std::endl;
+
 	system("pause");
 	return 0;
 }
