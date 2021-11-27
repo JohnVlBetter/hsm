@@ -57,6 +57,16 @@ int main() {
 	hsm::Matrix4x4 viewMat = hsm::GetPerspectiveMatrix(1920.0f / 1080.0f, 175, 0.1f, 1000.0f);
 	std::cout << viewMat << std::endl;
 
+	std::cout << "***********************" << std::endl;
+	hsm::Matrix4x4 rotMat = hsm::RotateX(45);
+	rotMat = rotMat * hsm::RotateY(45);
+	rotMat = rotMat * hsm::RotateZ(45);
+	hsm::Quaternion q1(rotMat);
+	std::cout << q1 << std::endl;
+	std::cout << rotMat << std::endl;
+	std::cout << q1.ToMatrix4x4() << std::endl;
+	if(rotMat == q1.ToMatrix4x4()) std::cout << "yess3!!!" << std::endl;
+
 	system("pause");
 	return 0;
 }

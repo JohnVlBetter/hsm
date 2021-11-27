@@ -1,4 +1,4 @@
-#if defined(_MSC_VER)
+﻿#if defined(_MSC_VER)
 #define NOMINMAX
 #pragma once
 #endif
@@ -22,6 +22,16 @@ namespace hsm {
 static constexpr Float Sqrt2 = 1.41421356237309504880;
 static constexpr Float Pi    = 3.14159265358979323846;
 static constexpr Float InvPi = 0.31830988618379067154;
+
+template <typename T, typename S, typename R>
+inline T Clamp(T val, S low, R high) {
+	if (val < low)
+		return low;
+	else if (val > high)
+		return high;
+	else
+		return val;
+}
 
 template<typename T>
 inline bool isNaN(const T t) { return std::isnan(t); }
@@ -143,16 +153,16 @@ public:
 		return *this;
 	}
 
-	Float DistanceSquared(const Point2<T>& p) const { 
+	inline Float DistanceSquared(const Point2<T>& p) const {
 		return std::pow(x - p.x, 2) + std::pow(y - p.y, 2);
 	}
-	Float Distance(const Point2<T>& p) const { return std::sqrt(DistanceSquared(p)); }
+	inline Float Distance(const Point2<T>& p) const { return std::sqrt(DistanceSquared(p)); }
 
-	Point2<T> Floor() const { return Point2<T>(std::floor(x), std::floor(y)); }
-	Point2<T> Ceil() const { return Point2<T>(std::ceil(x), std::ceil(y)); }
-	Point2<T> Abs() const { return Point2<T>(std::abs(x), std::abs(y)); }
+	inline Point2<T> Floor() const { return Point2<T>(std::floor(x), std::floor(y)); }
+	inline Point2<T> Ceil() const { return Point2<T>(std::ceil(x), std::ceil(y)); }
+	inline Point2<T> Abs() const { return Point2<T>(std::abs(x), std::abs(y)); }
 
-	Point2<T> Lerp(const Point2<T>& p, Float t) const { return (1 - t)*(*this) + t * p; }
+	inline Point2<T> Lerp(const Point2<T>& p, Float t) const { return (1 - t)*(*this) + t * p; }
 
 	//public data
 	T x, y;
@@ -289,16 +299,16 @@ public:
 		return *this;
 	}
 
-	Float DistanceSquared(const Point3<T>& p) const {
+	inline Float DistanceSquared(const Point3<T>& p) const {
 		return std::pow(x - p.x, 2) + std::pow(y - p.y, 2) + std::pow(z - p.z, 2);
 	}
-	Float Distance(const Point3<T>& p) const { return std::sqrt(DistanceSquared(p)); }
+	inline Float Distance(const Point3<T>& p) const { return std::sqrt(DistanceSquared(p)); }
 
-	Point3<T> Floor() const { return Point3<T>(std::floor(x), std::floor(y), std::floor(z)); }
-	Point3<T> Ceil() const { return Point3<T>(std::ceil(x), std::ceil(y), std::ceil(z)); }
-	Point3<T> Abs() const { return Point3<T>(std::abs(x), std::abs(y), std::abs(z)); }
+	inline Point3<T> Floor() const { return Point3<T>(std::floor(x), std::floor(y), std::floor(z)); }
+	inline Point3<T> Ceil() const { return Point3<T>(std::ceil(x), std::ceil(y), std::ceil(z)); }
+	inline Point3<T> Abs() const { return Point3<T>(std::abs(x), std::abs(y), std::abs(z)); }
 
-	Point3<T> Lerp(const Point3<T>& p, Float t) const { return (1 - t)*(*this) + t * p; }
+	inline Point3<T> Lerp(const Point3<T>& p, Float t) const { return (1 - t)*(*this) + t * p; }
 
 	//public data
 	T x, y, z;
@@ -415,11 +425,11 @@ public:
 		return *this;
 	}
 
-	Float LengthSquared()const { return x * x + y * y; }
-	Float Length()const { return std::sqrt(LengthSquared()); }
+	inline Float LengthSquared()const { return x * x + y * y; }
+	inline Float Length()const { return std::sqrt(LengthSquared()); }
 
-	Vector2<T> Abs() const { return Vector2<T>(std::abs(x), std::abs(y)); }
-	Vector2<T> Normalize() const { return *this / Length(); }
+	inline Vector2<T> Abs() const { return Vector2<T>(std::abs(x), std::abs(y)); }
+	inline Vector2<T> Normalize() const { return *this / Length(); }
 
 	//public data
 	T x, y;
@@ -550,11 +560,11 @@ public:
 		return *this;
 	}
 
-	Float LengthSquared()const { return x * x + y * y + z * z; }
-	Float Length()const { return std::sqrt(LengthSquared()); }
+	inline Float LengthSquared()const { return x * x + y * y + z * z; }
+	inline Float Length()const { return std::sqrt(LengthSquared()); }
 
-	Vector3<T> Abs() const { return Vector3<T>(std::abs(x), std::abs(y), std::abs(z)); }
-	Vector3<T> Normalize() const { return *this / Length(); }
+	inline Vector3<T> Abs() const { return Vector3<T>(std::abs(x), std::abs(y), std::abs(z)); }
+	inline Vector3<T> Normalize() const { return *this / Length(); }
 
 	//public data
 	T x, y, z;
@@ -629,14 +639,16 @@ public:
 	bool operator == (const Matrix4x4& mat) const {
 		for (int i = 0; i <= 3; ++i)
 			for (int j = 0; j <= 3; ++j)
-				if (data[i][j] != mat.data[i][j]) return false;
+				if (std::abs(data[i][j] - mat.data[i][j]) > 1e-6)
+					return false;
 		return true;
 	}
 
 	bool operator != (const Matrix4x4& mat) const {
 		for (int i = 0; i <= 3; ++i)
 			for (int j = 0; j <= 3; ++j)
-				if (data[i][j] != mat.data[i][j]) return true;
+				if (std::abs(data[i][j] - mat.data[i][j]) > 1e-6) 
+					return true;
 		return false;
 	}
 
@@ -645,15 +657,15 @@ public:
 		for (int i = 0; i < 4; ++i)
 			for (int j = 0; j < 4; ++j)
 				result.data[i][j] = data[i][0] * mat.data[0][j] + data[i][1] * mat.data[1][j] +
-					data[i][2] * mat.data[2][j] + data[i][3] * mat.data[3][j];
+					                data[i][2] * mat.data[2][j] + data[i][3] * mat.data[3][j];
 		return result;
 	}
 
 	Matrix4x4 Transpose() const {
 		return Matrix4x4(data[0][0], data[1][0], data[2][0], data[3][0],
-			data[0][1], data[1][1], data[2][1], data[3][1],
-			data[0][2], data[1][2], data[2][2], data[3][2],
-			data[0][3], data[1][3], data[2][3], data[3][3]);
+			             data[0][1], data[1][1], data[2][1], data[3][1],
+			             data[0][2], data[1][2], data[2][2], data[3][2],
+			             data[0][3], data[1][3], data[2][3], data[3][3]);
 	}
 
 	Matrix4x4 Inverse() const {
@@ -731,28 +743,28 @@ inline std::ostream& operator << (std::ostream& o, const Matrix4x4& mat) {
 
 Matrix4x4 Translate(const Vector3f delta) {
 	return Matrix4x4(1.0f, 0.0f, 0.0f, delta.x, 0.0f, 1.0f, 0.0f, delta.y,
-		0.0f, 0.0f, 1.0f, delta.z, 0.0f, 0.0f, 0.0f, 1.0f);
+		             0.0f, 0.0f, 1.0f, delta.z, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Matrix4x4 RotateX(Float degree) {
 	Float sinTheta = std::sin(Radians(degree));
 	Float cosTheta = std::cos(Radians(degree));
 	return Matrix4x4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, cosTheta, -sinTheta, 0.0f,
-		0.0f, sinTheta, cosTheta, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		             0.0f, sinTheta, cosTheta, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Matrix4x4 RotateY(Float degree) {
 	Float sinTheta = std::sin(Radians(degree));
 	Float cosTheta = std::cos(Radians(degree));
 	return Matrix4x4(cosTheta, 0.0f, sinTheta, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		-sinTheta, 0.0f, cosTheta, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		             -sinTheta, 0.0f, cosTheta, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Matrix4x4 RotateZ(Float degree) {
 	Float sinTheta = std::sin(Radians(degree));
 	Float cosTheta = std::cos(Radians(degree));
 	return Matrix4x4(cosTheta, -sinTheta, 0.0f, 0.0f, sinTheta, cosTheta, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		             0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Matrix4x4 Rotate(const Vector3f& axis, Float degree) {
@@ -775,7 +787,7 @@ Matrix4x4 Rotate(const Vector3f& axis, Float degree) {
 
 Matrix4x4 Scale(const Vector3f& scale) {
 	return Matrix4x4(scale.x, 0.0f, 0.0f, 0.0f, 0.0f, scale.y, 0.0f, 0.0f,
-		0.0f, 0.0f, scale.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		             0.0f, 0.0f, scale.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Matrix4x4 GetViewMatrix(const Point3f& pos, const Point3f& target, const Vector3f& viewUp) {
@@ -787,16 +799,147 @@ Matrix4x4 GetViewMatrix(const Point3f& pos, const Point3f& target, const Vector3
 	Vector3f right = Cross(viewUp.Normalize(), forward);
 	Vector3f up = Cross(forward, right);
 	Matrix4x4 rotateMat(right.x, right.y, right.z, 0.0f, up.x, up.y, up.z, 0.0f,
-		forward.x, forward.y, forward.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+		                forward.x, forward.y, forward.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 	Matrix4x4 translateMat(1.0f, 0.0f, 0.0f, -pos.x, 0.0f, 1.0f, 0.0f, -pos.y,
-		0.0f, 0.0f, 1.0f, -pos.z, 0.0f, 0.0f, 0.0f, 1.0f);
+		                   0.0f, 0.0f, 1.0f, -pos.z, 0.0f, 0.0f, 0.0f, 1.0f);
 	return rotateMat * translateMat;
 }
 
 Matrix4x4 GetPerspectiveMatrix(Float aspect, Float fov, Float near, Float far) {
 	Float tanHalfFov = std::tan(Radians(fov) * 0.5f);
 	return Matrix4x4(1 / (aspect * tanHalfFov), 0.0f, 0.0f, 0.0f, 0.0f, 1 / tanHalfFov, 0.0f, 0.0f,
-		0.0f, 0.0f, (near + far) / (far - near), 1.0f, 0.0f, 0.0f, (2 * far * near)/(near - far), 0.0f);
+		             0.0f, 0.0f, (near + far) / (far - near), 1.0f, 0.0f, 0.0f, (2 * far * near)/(near - far), 0.0f);
+}
+
+class Quaternion {
+public:
+	//public methods
+	Quaternion():w(1), x(0), y(0), z(0) {}
+	Quaternion(Float ww, Float xx, Float yy, Float zz):w(ww), x(xx), y(yy), z(zz) {}
+	Quaternion(const Matrix4x4& rotMat) {
+		//trace = 4w^2 - 1 = mat[0][0] + mat[1][1] + mat[2][2]
+		Float trace = rotMat.data[0][0] + rotMat.data[1][1] + rotMat.data[2][2];
+		if (trace > 0.0f) {
+			Float sqrtT = std::sqrt(trace + 1.0f);
+			w = sqrtT * 0.5f;
+			sqrtT = 0.5f / sqrtT;
+			x = (rotMat.data[2][1] - rotMat.data[1][2]) * sqrtT;
+			y = (rotMat.data[0][2] - rotMat.data[2][0]) * sqrtT;
+			z = (rotMat.data[1][0] - rotMat.data[0][1]) * sqrtT;
+		}
+		else {
+			const int indices[3] = { 1, 2 ,0 };
+			Float QuaternionXYZ[3];
+			int i = 0;
+			if (rotMat.data[1][1] > rotMat.data[0][0]) i = 1;
+			if (rotMat.data[2][2] > rotMat.data[i][i]) i = 2;
+			int j = indices[i];
+			int k = indices[j];
+			Float sqrtT = std::sqrt((rotMat.data[i][i] - (rotMat.data[j][j] + rotMat.data[k][k])) + 1.0f);
+			QuaternionXYZ[i] = sqrtT * 0.5f;
+			if (sqrtT != 0.f) sqrtT = 0.5f / sqrtT;
+			w = (rotMat.data[k][j] - rotMat.data[j][k]) * sqrtT;
+			QuaternionXYZ[j] = (rotMat.data[j][i] + rotMat.data[i][j]) * sqrtT;
+			QuaternionXYZ[k] = (rotMat.data[k][i] + rotMat.data[i][k]) * sqrtT;
+			x = QuaternionXYZ[0];
+			y = QuaternionXYZ[1];
+			z = QuaternionXYZ[2];
+		}
+	}
+
+	Matrix4x4 ToMatrix4x4() const {
+		Float xx = x * x, yy = y * y, zz = z * z ,xy = x * y, xz = x * z, 
+			  yz = y * z ,wx = x * w, wy = y * w, wz = z * w;
+
+		//We use the left-hand coordinate system, so we need to return the inverse matrix of this matrix.
+		//And the transpose matrix of the rotation matrix is ​​equal to its inverse matrix.
+		return Matrix4x4(1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy), 0.0f,
+						 2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx), 0.0f,
+						 2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy), 0.0f,
+						 0.0f, 0.0f, 0.0f, 1.0f).Transpose();
+	}
+
+	Quaternion operator - () const {
+		return Quaternion(-w, -x, -y, -z);
+	}
+
+	Quaternion operator + (const Quaternion& q) const {
+		return Quaternion(w + q.w, x + q.x, y + q.y, z + q.z);
+	}
+
+	Quaternion& operator += (const Quaternion& q) {
+		w += q.w;
+		x += q.x;
+		y += q.y;
+		z += q.z;
+		return *this;
+	}
+
+	Quaternion operator - (const Quaternion& q) const {
+		return Quaternion(w - q.w, x - q.x, y - q.y, z - q.z);
+	}
+
+	Quaternion& operator -= (const Quaternion& q) {
+		w -= q.w;
+		x -= q.x;
+		y -= q.y;
+		z -= q.z;
+		return *this;
+	}
+
+	Quaternion &operator*=(Float n) {
+		w *= n;
+		x *= n;
+		y *= n;
+		z *= n;
+		return *this;
+	}
+	Quaternion operator*(Float n) const {
+		return Quaternion(w * n, x * n, y * n, z * n);
+	}
+	Quaternion &operator/=(Float n) {
+		w *= n;
+		x *= n;
+		y *= n;
+		z *= n;
+		return *this;
+	}
+	Quaternion operator/(Float n) const {
+		assert(n != 0);
+		Float inverse = (Float)1 / n;
+		return Quaternion(w * inverse, x * inverse, y * inverse, z * inverse);
+	}
+
+	inline Quaternion Normalize() const { return *this / std::sqrt(w * w + x * x + y * y + z * z); }
+
+	//public data
+	Float w, x, y, z;
+};
+
+inline Quaternion operator * (Float n, const Quaternion &q) { 
+	return q * n; 
+}
+
+inline std::ostream& operator << (std::ostream &o, const Quaternion &q) {
+	o << '[' << q.w << ',' << q.x << ',' << q.y << ',' << q.z << ']';
+	return o;
+}
+
+inline Float Dot(const Quaternion& q1, const Quaternion& q2) {
+	return q1.w * q2.w + q1.x * q2.x + q1.y * q2.y + q1.z * q2.z;
+}
+
+Quaternion Slerp(Float n, const Quaternion& q1, const Quaternion& q2) {
+	Float cosTheta = Dot(q1, q2);
+	//If the dot product is negative, slerp won't take the shorter path.
+	if (cosTheta > .9995f)
+		return ((1 - n) * q1 + n * q2).Normalize();
+	else {
+		Float theta = std::acos(Clamp(cosTheta, -1, 1));
+		Float thetaN = theta * n;
+		Quaternion q3 = (q2 - q1 * cosTheta).Normalize();
+		return q1 * std::cos(thetaN) + q3 * std::sin(thetaN);
+	}
 }
 
 }
