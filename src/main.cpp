@@ -67,6 +67,31 @@ int main() {
 	std::cout << q1.ToMatrix4x4() << std::endl;
 	if(rotMat == q1.ToMatrix4x4()) std::cout << "yess3!!!" << std::endl;
 
+	std::cout << "***********************" << std::endl;
+	hsm::Ray ray(hsm::Point3f(0.0f, 0.0f, 0.0f), hsm::Vector3f(4.5f, 1.0f, 3.6f));
+	std::cout << ray.At(2.3f) << std::endl;
+	std::cout << ray << std::endl;
+
+	std::cout << "***********************" << std::endl;
+	hsm::Bounds3f bounds(hsm::Point3f(0.0f, 0.0f, 0.0f), hsm::Point3f(5.0f, 6.5f, 2.0f));
+	double r;
+	hsm::Point3f c;
+	bounds.BoundingSphere(c, r);
+	std::cout << c << r << std::endl;
+	std::cout << bounds.Diagonal() << std::endl;
+	std::cout << bounds.SurfaceArea() << std::endl;
+	std::cout << bounds.Volume() << std::endl;
+	std::cout << bounds << std::endl;
+
+	std::cout << "***********************" << std::endl;
+	hsm::Bounds2f bounds2(hsm::Point2f(0.0f, 0.0f), hsm::Point2f(5.0f, 6.5f));
+	hsm::Point2f c2;
+	bounds2.BoundingSphere(c2, r);
+	std::cout << c2 << r << std::endl;
+	std::cout << bounds2.Diagonal() << std::endl;
+	std::cout << bounds2.Area() << std::endl;
+	std::cout << bounds2 << std::endl;
+
 	system("pause");
 	return 0;
 }

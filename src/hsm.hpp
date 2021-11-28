@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <iterator>
 #include <iostream>
+#include <algorithm>
 
 //#define USE_DOUBLE
 #ifdef USE_DOUBLE
@@ -17,11 +18,20 @@
 	typedef float Float;
 #endif
 
+#if defined(_MSC_VER)
+#pragma warning(disable : 4305)
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4843)
+#pragma warning(disable : 4267)
+#pragma warning(disable : 4838)
+#endif
+
 namespace hsm {
 
-static constexpr Float Sqrt2 = 1.41421356237309504880;
-static constexpr Float Pi    = 3.14159265358979323846;
-static constexpr Float InvPi = 0.31830988618379067154;
+static constexpr Float Infinity = std::numeric_limits<Float>::infinity();
+static constexpr Float Sqrt2    = 1.41421356237309504880;
+static constexpr Float Pi       = 3.14159265358979323846;
+static constexpr Float InvPi    = 0.31830988618379067154;
 
 template <typename T, typename S, typename R>
 inline T Clamp(T val, S low, R high) {
@@ -43,6 +53,7 @@ inline Float Radians(Float degree) { return (Pi / 180) * degree; }
 inline Float Degrees(Float radian) { return (180 / Pi) * radian; }
 
 template<typename T> class Vector2;
+template<typename T> class Bounds2;
 //two-dimensional point
 template<typename T>
 class Point2 {
@@ -179,7 +190,18 @@ inline Point2<T> operator * (U n, const Point2<T>& v) {
 	return v * n;
 }
 
+template <typename T>
+Point2<T> Lerp(Float t, const Point2<T> &p0, const Point2<T> &p1) {
+	return (1 - t) * p0 + t * p1;
+}
+
+template <typename T>
+bool Inside(const Point2<T> &p, const Bounds2<T> &b) {
+	return (p.x >= b.pMin.x && p.x <= b.pMax.x && p.y >= b.pMin.y && p.y <= b.pMax.y);
+}
+
 template<typename T> class Vector3;
+template<typename T> class Bounds3;
 //three-dimensional point
 template<typename T>
 class Point3 {
@@ -323,6 +345,17 @@ std::ostream & operator << (std::ostream &o, const Point3<T>& p) {
 template<typename T, typename U>
 inline Point3<T> operator * (U n, const Point3<T>& v) {
 	return v * n;
+}
+
+template <typename T>
+Point3<T> Lerp(Float t, const Point3<T> &p0, const Point3<T> &p1) {
+	return (1 - t) * p0 + t * p1;
+}
+
+template <typename T>
+bool Inside(const Point3<T> &p, const Bounds3<T> &b) {
+	return (p.x >= b.pMin.x && p.x <= b.pMax.x && p.y >= b.pMin.y && 
+		    p.y <= b.pMax.y && p.z >= b.pMin.z && p.z <= b.pMax.z);
 }
 
 //two-dimensional vector
@@ -601,6 +634,134 @@ typedef Point2<int> Point2i;
 typedef Point3<Float> Point3f;
 typedef Point3<int> Point3i;
 
+//Bounds2
+template <typename T>
+class Bounds2 {
+public:
+	//public methods
+	Bounds2() {
+		T minNum = std::numeric_limits<T>::lowest();
+		T maxNum = std::numeric_limits<T>::max();
+		pMin = Point2<T>(minNum, minNum);
+		pMax = Point2<T>(maxNum, maxNum);
+	}
+
+	Bounds2(const Point2<T> &p1, const Point2<T> &p2) :
+		pMax(std::max(p1.x, p2.x), std::max(p1.y, p2.y)),
+		pMin(std::min(p1.x, p2.x), std::min(p1.y, p2.y)) {}
+
+	inline Vector2<T> Diagonal() const { return pMax - pMin; }
+
+	inline T Area() const { return (pMax.x - pMin.x) * (pMax.y - pMin.y); }
+
+	Point2<T>& operator [] (int i) {
+		assert(i == 0 || i == 1);
+		if (i == 0) return pMin;
+		return pMax;
+	}
+
+	const Point2<T>& operator [] (int i) const {
+		assert(i == 0 || i == 1);
+		if (i == 0) return pMin;
+		return pMax;
+	}
+
+	bool operator == (const Bounds2<T>& b) const {
+		return pMin == b.pMin && pMax == b.pMax;
+	}
+
+	bool operator != (const Bounds2<T>& b) const {
+		return pMin != b.pMin || pMax != b.pMax;
+	}
+
+	void BoundingSphere(Point2<T>& center, T& radius) const {
+		Point2<T> c = (pMin + pMax) * 0.5f;
+		center.x = c.x;
+		center.y = c.y;
+		radius = Inside(center, *this) ? center.Distance(pMax) : 0;
+	}
+
+	//public data
+	Point2<T> pMin, pMax;
+};
+
+template <typename T>
+inline std::ostream& operator << (std::ostream& o, const Bounds2<T>& b) {
+	o << "[ " << b.pMin << " , " << b.pMax << " ]";
+	return o;
+}
+
+//Bounds3
+template <typename T>
+class Bounds3 {
+public:
+	//public methods
+	Bounds3() {
+		T minNum = std::numeric_limits<T>::lowest();
+		T maxNum = std::numeric_limits<T>::max();
+		pMin = Point3<T>(minNum, minNum, minNum);
+		pMax = Point3<T>(maxNum, maxNum, maxNum);
+	}
+
+	Bounds3(const Point3<T> &p1, const Point3<T> &p2) :
+		pMax(std::max(p1.x, p2.x), std::max(p1.y, p2.y), std::max(p1.z, p2.z)),
+		pMin(std::min(p1.x, p2.x), std::min(p1.y, p2.y), std::min(p1.z, p2.z)) {}
+
+	inline Vector3<T> Diagonal() const { return pMax - pMin; }
+
+	inline T SurfaceArea() const {
+		Vector3<T> v = Diagonal();
+		return 2 * (v.x * v.y + v.y * v.z + v.x * v.z);
+	}
+
+	inline T Volume() const {
+		Vector3<T> v = Diagonal();
+		return v.x * v.y * v.z;
+	}
+
+	Point3<T>& operator [] (int i) {
+		assert(i == 0 || i == 1);
+		if (i == 0) return pMin;
+		return pMax;
+	}
+
+	const Point3<T>& operator [] (int i) const {
+		assert(i == 0 || i == 1);
+		if (i == 0) return pMin;
+		return pMax;
+	}
+
+	bool operator == (const Bounds3<T>& b) const {
+		return pMin == b.pMin && pMax == b.pMax;
+	}
+
+	bool operator != (const Bounds3<T>& b) const {
+		return pMin != b.pMin || pMax != b.pMax;
+	}
+
+	void BoundingSphere(Point3<T>& center, T& radius) const {
+		Point3<T> c = (pMin + pMax) * 0.5f;
+		center.x = c.x;
+		center.y = c.y;
+		center.z = c.z;
+		radius = Inside(center, *this) ? center.Distance(pMax) : 0;
+	}
+
+	//public data
+	Point3<T> pMin, pMax;
+};
+
+template <typename T>
+inline std::ostream& operator << (std::ostream& o, const Bounds3<T>& b) {
+	o << "[ " << b.pMin << " , " << b.pMax << " ]";
+	return o;
+}
+
+typedef Bounds2<int> Bounds2i;
+typedef Bounds2<Float> Bounds2f;
+typedef Bounds3<int> Bounds3i;
+typedef Bounds3<Float> Bounds3f;
+
 //Matrix 4x4
 class Matrix4x4 {
 public:
@@ -811,6 +972,7 @@ Matrix4x4 GetPerspectiveMatrix(Float aspect, Float fov, Float near, Float far) {
 		             0.0f, 0.0f, (near + far) / (far - near), 1.0f, 0.0f, 0.0f, (2 * far * near)/(near - far), 0.0f);
 }
 
+//Quaternion
 class Quaternion {
 public:
 	//public methods
@@ -940,6 +1102,28 @@ Quaternion Slerp(Float n, const Quaternion& q1, const Quaternion& q2) {
 		Quaternion q3 = (q2 - q1 * cosTheta).Normalize();
 		return q1 * std::cos(thetaN) + q3 * std::sin(thetaN);
 	}
+}
+
+//Ray
+class Ray {
+public:
+	//public methods
+	Ray(const Point3f& o, const Vector3f& d) :origin(o), direction(d) {}
+
+	Point3f At(Float t) const { return origin + t * direction; }
+
+	bool HasNaN() const {
+		return (origin.HasNaN() || direction.HasNaN());
+	}
+
+	//public data
+	Point3f origin;
+	Vector3f direction;
+};
+
+inline std::ostream &operator<<(std::ostream &o, const Ray &r) {
+	o << "[ origin:" << r.origin << ", direction:" << r.direction << "]";
+	return o;
 }
 
 }
