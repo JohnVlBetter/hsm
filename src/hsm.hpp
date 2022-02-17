@@ -3,13 +3,13 @@
 #pragma once
 #endif
 
-#ifndef HSM_H
-#define HSM_H
+#pragma once
 
 #include <assert.h>
 #include <iterator>
 #include <iostream>
 #include <algorithm>
+#include <random>
 
 //#define USE_DOUBLE
 #ifdef USE_DOUBLE
@@ -33,6 +33,26 @@ static constexpr Float Sqrt2    = 1.41421356237309504880;
 static constexpr Float Pi       = 3.14159265358979323846;
 static constexpr Float InvPi    = 0.31830988618379067154;
 
+template<typename T>
+inline T Random() {
+	static std::uniform_real_distribution<T> distribution(0.0, 1.0);
+	static std::mt19937 generator;
+	return distribution(generator);
+}
+
+inline int RandomInt() {
+	return static_cast<int>(Random<Float>());
+}
+
+template<typename T>
+inline T Random(T min, T max) {
+	return min + (max - min) * Random<T>();
+}
+
+inline int RandomInt(int min, int max) {
+	return static_cast<int>(Random<Float>(min, max));
+}
+
 template <typename T, typename S, typename R>
 inline T Clamp(T val, S low, R high) {
 	if (val < low)
@@ -47,10 +67,14 @@ template<typename T>
 inline bool isNaN(const T t) { return std::isnan(t); }
 template<>
 inline bool isNaN(const int t) { return false; }
+template<typename T>
+inline bool isNearZero(const T t) { return fabs(t) < 1e-8; }
+template<>
+inline bool isNearZero(const int t) { return false; }
 
-inline Float Radians(Float degree) { return (Pi / 180) * degree; }
+inline Float Radians(Float degree) { return (Pi / 180.0f) * degree; }
 
-inline Float Degrees(Float radian) { return (180 / Pi) * radian; }
+inline Float Degrees(Float radian) { return (180.0f / Pi) * radian; }
 
 template<typename T> class Vector2;
 template<typename T> class Bounds2;
@@ -542,7 +566,7 @@ public:
 	}
 
 	Vector3<T> operator + (const Vector3<T>& v) const {
-		return Point3<T>(x + v.x, y + v.y, z + v.z);
+		return Vector3<T>(x + v.x, y + v.y, z + v.z);
 	}
 
 	Vector3<T>& operator += (const Vector3<T>& v) {
@@ -553,7 +577,7 @@ public:
 	}
 
 	Vector3<T> operator - (const Vector3<T>& v) const {
-		return Point3<T>(x - v.x, y - v.y, z - v.z);
+		return Vector3<T>(x - v.x, y - v.y, z - v.z);
 	}
 
 	Vector3<T>& operator -= (const Vector3<T>& v) {
@@ -593,11 +617,22 @@ public:
 		return *this;
 	}
 
+	inline bool IsNearZero() const { return isNearZero<T>(x) && isNearZero<T>(y) && isNearZero<T>(z); }
 	inline Float LengthSquared()const { return x * x + y * y + z * z; }
 	inline Float Length()const { return std::sqrt(LengthSquared()); }
 
 	inline Vector3<T> Abs() const { return Vector3<T>(std::abs(x), std::abs(y), std::abs(z)); }
 	inline Vector3<T> Normalize() const { return *this / Length(); }
+	inline Vector3<T> Reflect(const Vector3<T>& normal) { return *this - 2 * Dot(*this, normal)*normal; }
+
+	Vector3<T> Refract(const Vector3<T>& normal, Float etaiOverEtat) {
+		Float cosTheta = fmin(Dot(-*this, normal), 1.0f);
+		//R perpendicular
+		Vector3<T> rOutPerp = etaiOverEtat * (*this + cosTheta * normal);
+		//R parallel
+		Vector3<T> rOutParallel = -sqrt(fabs(1.0f - rOutPerp.LengthSquared())) * normal;
+		return rOutPerp + rOutParallel;
+	}
 
 	//public data
 	T x, y, z;
@@ -633,6 +668,91 @@ typedef Point2<Float> Point2f;
 typedef Point2<int> Point2i;
 typedef Point3<Float> Point3f;
 typedef Point3<int> Point3i;
+
+inline Vector3f Convert(const Point3f& p) {
+	return Vector3f(p.x, p.y, p.z);
+}
+
+Vector3f RandomInUnitSphere() {
+	while (true) {
+		Vector3f v(Random<Float>(-1.0f, 1.0f), Random<Float>(-1.0f, 1.0f), Random<Float>(-1.0f, 1.0f));
+		if (v.LengthSquared() >= 1.0f) continue;
+		return v;
+	}
+}
+
+Vector2f RandomInUnitDisk() {
+	while (true) {
+		Vector2f v(Random<Float>(-1.0f, 1.0f), Random<Float>(-1.0f, 1.0f));
+		if (v.LengthSquared() >= 1.0f) continue;
+		return v;
+	}
+}
+
+Vector3f RandomInHemisphere(const Vector3f& normal) {
+	Vector3f v = RandomInUnitSphere();
+	if (Dot(v, normal) > 0.0f) return v;
+	return -v;
+}
+
+inline Vector3f RandomUnitVec() {
+	return RandomInUnitSphere().Normalize();
+}
+
+inline Vector3f RandomVec(Float min, Float max) {
+	return Vector3f(Random<Float>(min, max), Random<Float>(min, max), Random<Float>(min, max));
+}
+
+inline Vector3f RandomVec() {
+	return Vector3f(Random<Float>(), Random<Float>(), Random<Float>());
+}
+
+inline Point3f RandomPoint(Float min, Float max) {
+	return Point3f(Random<Float>(min, max), Random<Float>(min, max), Random<Float>(min, max));
+}
+
+inline Point3f RandomPoint() {
+	return Point3f(Random<Float>(), Random<Float>(), Random<Float>());
+}
+
+inline Vector3f RandomCosineDirection() {
+	auto r1 = Random<Float>();
+	auto r2 = Random<Float>();
+	auto z = sqrt(1 - r2);
+	auto phi = 2 * Pi*r1;
+	auto x = cos(phi)*sqrt(r2);
+	auto y = sin(phi)*sqrt(r2);
+
+	return Vector3f(x, y, z);
+}
+
+inline Vector3f Random2Sphere(double radius, double distanceSquared) {
+	auto r1 = Random<Float>();
+	auto r2 = Random<Float>();
+	auto z = 1 + r2 * (sqrt(1 - radius * radius / distanceSquared) - 1);
+
+	auto phi = 2 * Pi*r1;
+	auto x = cos(phi)*sqrt(1 - z * z);
+	auto y = sin(phi)*sqrt(1 - z * z);
+
+	return Vector3f(x, y, z);
+}
+
+typedef Vector3<Float> Color;
+
+inline Color operator * (const Color& c1, const Color& c2) {
+	return Color(c1.x * c2.x, c1.y * c2.y, c1.z * c2.z);
+}
+
+template <typename T>
+int MaxDimension(const Vector3<T> &v) {
+	return (v.x > v.y) ? ((v.x > v.z) ? 0 : 2) : ((v.y > v.z) ? 1 : 2);
+}
+
+template <typename T>
+Vector3<T> Permute(const Vector3<T> &v, int x, int y, int z) {
+	return Vector3<T>(v[x], v[y], v[z]);
+}
 
 //Bounds2
 template <typename T>
@@ -762,6 +882,30 @@ typedef Bounds2<Float> Bounds2f;
 typedef Bounds3<int> Bounds3i;
 typedef Bounds3<Float> Bounds3f;
 
+//Ray
+class Ray {
+public:
+	//public methods
+	Ray() {}
+	Ray(const Point3f& o, const Vector3f& d, Float t = 0.0f) : origin(o), direction(d), time(t) {}
+
+	Point3f At(Float t) const { return origin + t * direction; }
+
+	bool HasNaN() const {
+		return (origin.HasNaN() || direction.HasNaN());
+	}
+
+	//public data
+	Point3f origin;
+	Vector3f direction;
+	Float time;
+};
+
+inline std::ostream &operator<<(std::ostream &o, const Ray &r) {
+	o << "[ origin:" << r.origin << ", direction:" << r.direction << ", time:" << r.time << "]";
+	return o;
+}
+
 //Matrix 4x4
 class Matrix4x4 {
 public:
@@ -820,6 +964,12 @@ public:
 				result.data[i][j] = data[i][0] * mat.data[0][j] + data[i][1] * mat.data[1][j] +
 					                data[i][2] * mat.data[2][j] + data[i][3] * mat.data[3][j];
 		return result;
+	}
+
+	bool HasScale() const {
+#define NOT_ONE(x) ((x) < .999f || (x) > 1.001f)
+		return (NOT_ONE(data[0][0]) || NOT_ONE(data[1][1]) || NOT_ONE(data[2][2]));
+#undef NOT_ONE
 	}
 
 	Matrix4x4 Transpose() const {
@@ -882,12 +1032,25 @@ public:
 		return Matrix4x4(inv);
 	}
 
+	bool SwapsHandedness() const {
+		Float det = data[0][0] * (data[1][1] * data[2][2] - data[1][2] * data[2][1]) -
+					data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0]) +
+					data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
+		return det < 0;
+	}
+
 	bool IsIdentity() const {
 		return (data[0][0] == 1.f && data[0][1] == 0.f && data[0][2] == 0.f && data[0][3] == 0.f && 
 				data[1][0] == 0.f && data[1][1] == 1.f && data[1][2] == 0.f && data[1][3] == 0.f && 
 				data[2][0] == 0.f && data[2][1] == 0.f && data[2][2] == 1.f && data[2][3] == 0.f &&
 				data[3][0] == 0.f && data[3][1] == 0.f && data[3][2] == 0.f && data[3][3] == 1.f);
 	}
+
+	template <typename T>
+	inline Point3<T> operator()(const Point3<T> &p) const;
+	template <typename T>
+	inline Vector3<T> operator()(const Vector3<T> &v) const;
+	inline Ray operator()(const Ray &r) const;
 
 	//public data
 	Float data[4][4];
@@ -970,6 +1133,32 @@ Matrix4x4 GetPerspectiveMatrix(Float aspect, Float fov, Float near, Float far) {
 	Float tanHalfFov = std::tan(Radians(fov) * 0.5f);
 	return Matrix4x4(1 / (aspect * tanHalfFov), 0.0f, 0.0f, 0.0f, 0.0f, 1 / tanHalfFov, 0.0f, 0.0f,
 		             0.0f, 0.0f, (near + far) / (far - near), 1.0f, 0.0f, 0.0f, (2 * far * near)/(near - far), 0.0f);
+}
+
+template <typename T>
+inline Point3<T> Matrix4x4::operator()(const Point3<T> &p) const {
+	T x = p.x, y = p.y, z = p.z;
+	T px = data[0][0] * x + data[0][1] * y + data[0][2] * z + data[0][3];
+	T py = data[1][0] * x + data[1][1] * y + data[1][2] * z + data[1][3];
+	T pz = data[2][0] * x + data[2][1] * y + data[2][2] * z + data[2][3];
+	T pw = data[3][0] * x + data[3][1] * y + data[3][2] * z + data[3][3];
+	assert(pw != 0);
+	if (pw == 1) return Point3<T>(px, py, pz);
+	else return Point3<T>(px, py, pz) / pw;
+}
+
+template <typename T>
+inline Vector3<T> Matrix4x4::operator()(const Vector3<T> &v) const {
+	T x = v.x, y = v.y, z = v.z;
+	return Vector3<T>(data[0][0] * x + data[0][1] * y + data[0][2] * z,
+					  data[1][0] * x + data[1][1] * y + data[1][2] * z,
+					  data[2][0] * x + data[2][1] * y + data[2][2] * z);
+}
+
+inline Ray Matrix4x4::operator()(const Ray &r) const {
+	Point3f o = (*this)(r.origin);
+	Vector3f d = (*this)(r.direction);
+	return Ray(o, d, r.time);
 }
 
 //Quaternion
@@ -1078,6 +1267,14 @@ public:
 	Float w, x, y, z;
 };
 
+Quaternion CreateQuaternionByVec3(const Vector3f& rotation) {
+	auto rotMat = Matrix4x4();
+	if (rotation.x != 0)rotMat = rotMat * RotateX(rotation.x);
+	if (rotation.y != 0)rotMat = rotMat * RotateY(rotation.y);
+	if (rotation.z != 0)rotMat = rotMat * RotateZ(rotation.z);
+	return Quaternion(rotMat);
+}
+
 inline Quaternion operator * (Float n, const Quaternion &q) { 
 	return q * n; 
 }
@@ -1103,28 +1300,4 @@ Quaternion Slerp(Float n, const Quaternion& q1, const Quaternion& q2) {
 		return q1 * std::cos(thetaN) + q3 * std::sin(thetaN);
 	}
 }
-
-//Ray
-class Ray {
-public:
-	//public methods
-	Ray(const Point3f& o, const Vector3f& d) :origin(o), direction(d) {}
-
-	Point3f At(Float t) const { return origin + t * direction; }
-
-	bool HasNaN() const {
-		return (origin.HasNaN() || direction.HasNaN());
-	}
-
-	//public data
-	Point3f origin;
-	Vector3f direction;
-};
-
-inline std::ostream &operator<<(std::ostream &o, const Ray &r) {
-	o << "[ origin:" << r.origin << ", direction:" << r.direction << "]";
-	return o;
 }
-
-}
-#endif
